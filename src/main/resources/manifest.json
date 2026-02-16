@@ -1,0 +1,16 @@
+{
+  "Group": "fr.thinkbit",
+  "Name": "ObjImporter",
+  "Version": "1.0.0",
+  "Description": "Import OBJ 3D models as voxelized block structures via server command",
+  "Authors": [
+    {
+      "Name": "ThinkBit"
+    }
+  ],
+  "ServerVersion": "*",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main": "fr.thinkbit.hytale.objimporter.ObjImporterPlugin"
+}
