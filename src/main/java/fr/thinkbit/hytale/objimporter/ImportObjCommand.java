@@ -1,20 +1,18 @@
 package fr.thinkbit.hytale.objimporter;
 
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.DefaultArg;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
-import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
+import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 
-public class ImportObjCommand extends AbstractPlayerCommand {
+public class ImportObjCommand extends AbstractAsyncCommand {
 
     private final Path modDataDir;
 
@@ -38,8 +36,7 @@ public class ImportObjCommand extends AbstractPlayerCommand {
     }
 
     @Override
-    protected void execute(CommandContext context, Store<EntityStore> store,
-                           Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+    protected CompletableFuture<Void> executeAsync(CommandContext context) {
         String file = context.get(fileArg);
         int x = context.get(xArg);
         int y = context.get(yArg);
@@ -51,19 +48,22 @@ public class ImportObjCommand extends AbstractPlayerCommand {
 
         if (!objPath.toFile().exists()) {
             context.sendMessage(Message.raw("Error: OBJ file not found: " + objPath));
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
         context.sendMessage(Message.raw("Starting OBJ import: " + file));
         context.sendMessage(Message.raw("Position: (" + x + ", " + y + ", " + z + ") height=" + height + " solid=" + solid));
 
-        try {
-            ObjImportService.importObj(
-                    world, objPath, x, y, z, height, solid,
-                    msg -> context.sendMessage(Message.raw(msg))
-            );
-        } catch (Exception e) {
-            context.sendMessage(Message.raw("Error during import: " + e.getMessage()));
-        }
+        return runAsync(context, () -> {
+            try {
+                World world = Universe.get().getDefaultWorld();
+                ObjImportService.importObj(
+                        world, objPath, x, y, z, height, solid,
+                        msg -> context.sendMessage(Message.raw(msg))
+                );
+            } catch (Exception e) {
+                context.sendMessage(Message.raw("Error during import: " + e.getMessage()));
+            }
+        }, Universe.get().getDefaultWorld());
     }
 }

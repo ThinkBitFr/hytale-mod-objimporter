@@ -49,17 +49,10 @@ class ObjImportServiceTest {
     }
 
     @Test
-    void defaultBlock_isHytaleStone() {
-        assertEquals("hytale:stone", ObjImportService.DEFAULT_BLOCK);
-    }
-
-    @Test
-    void defaultBlock_isNotEmpty() {
-        assertFalse(ObjImportService.DEFAULT_BLOCK.isEmpty());
-    }
-
-    @Test
-    void defaultBlock_hasNamespace() {
-        assertTrue(ObjImportService.DEFAULT_BLOCK.contains(":"));
+    void packRGB_components() {
+        int packed = ObjImportService.packRGB(0xAB, 0xCD, 0xEF);
+        assertEquals(0xAB, (packed >> 16) & 0xFF);
+        assertEquals(0xCD, (packed >> 8) & 0xFF);
+        assertEquals(0xEF, packed & 0xFF);
     }
 }
