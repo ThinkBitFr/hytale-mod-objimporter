@@ -18,8 +18,8 @@ public class ImportObjCommand extends AbstractAsyncCommand {
 
     private final RequiredArg<String> fileArg;
     private final RequiredArg<Integer> xArg;
-    private final RequiredArg<Integer> yArg;
     private final RequiredArg<Integer> zArg;
+    private final DefaultArg<Integer> yArg;
     private final DefaultArg<Integer> heightArg;
     private final DefaultArg<Boolean> solidArg;
 
@@ -29,8 +29,8 @@ public class ImportObjCommand extends AbstractAsyncCommand {
 
         this.fileArg = withRequiredArg("file", "Path to OBJ file relative to models dir", ArgTypes.STRING);
         this.xArg = withRequiredArg("x", "X origin coordinate", ArgTypes.INTEGER);
-        this.yArg = withRequiredArg("y", "Y origin coordinate", ArgTypes.INTEGER);
         this.zArg = withRequiredArg("z", "Z origin coordinate", ArgTypes.INTEGER);
+        this.yArg = withDefaultArg("y", "Y origin (auto-detect surface if omitted)", ArgTypes.INTEGER, -1, "auto");
         this.heightArg = withDefaultArg("height", "Model height in blocks", ArgTypes.INTEGER, 100, "100");
         this.solidArg = withDefaultArg("solid", "Fill interior", ArgTypes.BOOLEAN, true, "true");
     }
@@ -39,8 +39,8 @@ public class ImportObjCommand extends AbstractAsyncCommand {
     protected CompletableFuture<Void> executeAsync(CommandContext context) {
         String file = context.get(fileArg);
         int x = context.get(xArg);
-        int y = context.get(yArg);
         int z = context.get(zArg);
+        int y = context.get(yArg);
         int height = context.get(heightArg);
         boolean solid = context.get(solidArg);
 
@@ -52,13 +52,21 @@ public class ImportObjCommand extends AbstractAsyncCommand {
         }
 
         context.sendMessage(Message.raw("Starting OBJ import: " + file));
-        context.sendMessage(Message.raw("Position: (" + x + ", " + y + ", " + z + ") height=" + height + " solid=" + solid));
 
         return runAsync(context, () -> {
             try {
                 World world = Universe.get().getDefaultWorld();
+
+                int placeY = y;
+                if (placeY < 0) {
+                    placeY = ObjImportService.findSurfaceY(world, x, z);
+                    context.sendMessage(Message.raw("Auto-detected surface Y=" + placeY + " at (" + x + ", " + z + ")"));
+                }
+
+                context.sendMessage(Message.raw("Position: (" + x + ", " + placeY + ", " + z + ") height=" + height + " solid=" + solid));
+
                 ObjImportService.importObj(
-                        world, objPath, x, y, z, height, solid,
+                        world, objPath, x, placeY, z, height, solid,
                         msg -> context.sendMessage(Message.raw(msg))
                 );
             } catch (Exception e) {

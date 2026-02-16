@@ -25,7 +25,7 @@ public class ObjImportService {
 
         logger.accept("Initializing block color index...");
         BlockColorIndex colorIndex = new BlockColorIndex();
-        int defaultBlockId = colorIndex.findClosestBlock(128, 128, 128);
+        int defaultBlockId = colorIndex.findClosestBlock(190, 180, 170);
         BlockType defaultBt = BlockType.getAssetMap().getAsset(defaultBlockId);
         logger.accept("Default block: ID " + defaultBlockId +
                 " -> " + (defaultBt != null ? defaultBt.getId() : "NULL"));
@@ -147,6 +147,16 @@ public class ObjImportService {
             logger.accept("Import complete! Placed " + placed + " blocks" +
                     (skipped > 0 ? " (skipped " + skipped + " unknown)" : "") + ".");
         });
+    }
+
+    static int findSurfaceY(World world, int x, int z) {
+        // Scan from high to low to find the first non-empty block
+        for (int y = 255; y >= 0; y--) {
+            if (world.getBlock(x, y, z) != 0) {
+                return y + 1;
+            }
+        }
+        return 64; // fallback if no surface found
     }
 
     static int packRGB(int r, int g, int b) {
